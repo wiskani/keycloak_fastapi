@@ -1,15 +1,15 @@
 services:
-  fastapi-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fastapi-app
-    ports:
-      - "8080:8080"
-    volumes:
-      - .:/app
-    env_file:
-      - ./src/.env
+  # fastapi-app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: fastapi-app
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - .:/app
+  #   env_file:
+  #     - ./src/.env
 
   my-keycloak:
      image: quay.io/keycloak/keycloak:24.0
