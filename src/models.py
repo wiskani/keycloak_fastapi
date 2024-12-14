@@ -16,3 +16,7 @@ class UserInfo(BaseModel):
     preferred_username: str
     email: Optional[str] = None
     full_name: Optional[str] = None
+
+
+class Permision(BaseModel):
+    permision: str
