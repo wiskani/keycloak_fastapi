@@ -1,8 +1,7 @@
-from typing import List
 from fastapi import HTTPException, status
 from keycloak.exceptions import KeycloakAuthenticationError, KeycloakGetError
 from .config import keycloak_openid
-from .models import UserInfo, Permision 
+from .models import UserInfo
 
 
 class AuthService:
@@ -45,22 +44,21 @@ class AuthService:
             )
 
     @staticmethod
-    def verify_permissions(token: str) -> List[Permision]:
+    def decode_token(token: str):
         """
         Get permissions for a user
         """
         try:
-            keycloak_openid.load_authorization_config("./auth-config.json")
-            permission = keycloak_openid.get_permissions(token)
-            print(permission)
-            if not permission:
+            token_decode = keycloak_openid.decode_token(token)
+            print(token_decode)
+            if not token_decode:
                 raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="User Not have permissions"
+                        detail="there are a proble with role information in token"
                         )
-            return permission
+            return token_decode
         except KeycloakGetError as e:
             raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f'Could not find permissions: {e}',
+                    detail=f'Could not find token information: {e}',
                     )

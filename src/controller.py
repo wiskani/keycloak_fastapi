@@ -1,8 +1,9 @@
 from typing import List
 from fastapi import Depends, HTTPException, status, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .models import TokenResponse, UserInfo, Permision
+from .models import TokenResponse, UserInfo, Role, UserNew
 from .service import AuthService
+from .config import keycloak_admin
 
 # Initialize HTTPBearer security dependency
 bearer_scheme = HTTPBearer()
@@ -90,16 +91,28 @@ class AuthController:
         return user_info
 
     @staticmethod
-    def permissions_endpoint(
+    def role_checker(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    ) -> List[Permision]:
+    ) -> List[Role]:
         token = credentials.credentials
-        permissions = AuthService.verify_permissions(token)
+        data = AuthService.decode_token(token)
 
-        if not permissions:
+        if not data:
             raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="fail to get permissions",
+                    detail="fail to get roles",
                     )
+        roles = data.get("realm_access", {}).get("roles", [])
 
-        return permissions
+        return roles
+
+
+def create_new_user(new_user: UserNew) -> str:
+    user_id = keycloak_admin.create_user({
+        "email": f'{new_user.email}',
+        "username": f'{new_user.username}',
+        "enabled": f'{new_user.enabled}',
+        "firstName": f'{new_user.first_name}',
+        "lastName": f'{new_user.last_name}'
+        })
+    return user_id

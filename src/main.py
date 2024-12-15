@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends, Form
+from fastapi import FastAPI, Depends, Form, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .models import TokenResponse, UserInfo
-from .controller import AuthController
+from .models import TokenResponse, UserInfo, UserNew
+from .controller import AuthController,  create_new_user
 
 app = FastAPI()
 
@@ -54,19 +54,44 @@ async def protected_endpoint(
 
 
 # Define the protected endpoint return permision
-@app.get("/permision", response_model=UserInfo)
-async def permision_endpoint(
+@app.get("/roles")
+async def roles_endpoint(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         ):
-    return AuthController.permissions_endpoint(credentials)
+    return AuthController.role_checker(credentials)
 
 
 @app.get("/states")
 async def states_list(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         ):
+    """
+    Endpoint to list states, accessible only to users with specific roles.
+
+    Args:
+        credentials (HTTPAuthorizationCredentials): Bearer token provided via HTTP Authorization header.
+
+    Returns:
+        dict: Message indicating success or failure based on role verification.
+    """
+    # Obtener roles del token
+    roles = AuthController.role_checker(credentials)
+
+    required_roles = {"AgentRole"}
+    if not required_roles.intersection(roles):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this resource.",
+        )
+
     return {
-            "message": (
-                "The users can view list states"
-            ),
-        }
+        "message": "The users can view the list of states",
+    }
+
+
+@app.post("/user")
+async def create_user_api(
+        new_user: UserNew,
+        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+        ) -> str:
+    return create_new_user(new_user)
